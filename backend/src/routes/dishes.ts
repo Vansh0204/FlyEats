@@ -1,7 +1,26 @@
 import express from 'express'
+import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 
 const router = express.Router()
+
+const airportSelect = {
+  id: true,
+  name: true,
+  code: true,
+} as const
+
+type MenuItemWithOutlet = Prisma.MenuItemGetPayload<{
+  include: {
+    outlet: {
+      include: {
+        airport: {
+          select: typeof airportSelect
+        }
+      }
+    }
+  }
+}>
 
 // Get popular dishes with their outlets
 router.get('/popular', async (req, res) => {
@@ -9,7 +28,7 @@ router.get('/popular', async (req, res) => {
     const { limit = 14, airportId } = req.query
 
     // Build where clause - filter by airport if provided
-    const whereClause: any = {
+    const whereClause: Prisma.MenuItemWhereInput = {
       isAvailable: true,
     }
 
@@ -26,11 +45,7 @@ router.get('/popular', async (req, res) => {
         outlet: {
           include: {
             airport: {
-              select: {
-                id: true,
-                name: true,
-                code: true,
-              },
+              select: airportSelect,
             },
           },
         },
@@ -39,7 +54,7 @@ router.get('/popular', async (req, res) => {
       orderBy: {
         createdAt: 'desc', // Can be changed to order by popularity, ratings, etc.
       },
-    })
+    }) as MenuItemWithOutlet[]
 
     // Transform to dish format
     const dishes = menuItems.map((item) => ({
@@ -163,23 +178,18 @@ router.get('/category/:category', async (req, res) => {
         isAvailable: true,
         category: {
           contains: category,
-          mode: 'insensitive',
         },
-      },
+      } as Prisma.MenuItemWhereInput,
       include: {
         outlet: {
           include: {
             airport: {
-              select: {
-                id: true,
-                name: true,
-                code: true,
-              },
+              select: airportSelect,
             },
           },
         },
       },
-    })
+    }) as MenuItemWithOutlet[]
 
     const dishes = menuItems.map((item) => ({
       id: item.id,

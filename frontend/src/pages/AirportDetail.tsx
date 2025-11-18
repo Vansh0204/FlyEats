@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { apiFetch } from '../lib/api'
 
 /**
  * AirportDetail page - automatically redirects to outlets page
@@ -15,7 +16,7 @@ export default function AirportDetail() {
     const userId = sessionStorage.getItem('userId')
     
     if (userId) {
-      fetch(`/api/pnr/user/${userId}`)
+      apiFetch(`/api/pnr/user/${userId}`)
         .then((res) => res.json())
         .then((data) => {
           const gateNumber = data.booking?.gateNumber || ''

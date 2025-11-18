@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { FaArrowLeft, FaMapMarkerAlt, FaClock, FaShoppingBag, FaStore } from 'react-icons/fa'
 import { formatCurrency } from '../utils'
+import { apiFetch } from '../lib/api'
 
 interface Outlet {
   id: string
@@ -37,7 +38,7 @@ export default function DishOutlets() {
       return
     }
 
-    fetch(`/api/dishes/${dishId}/outlets${airportId ? `?airportId=${airportId}` : ''}`)
+    apiFetch(`/api/dishes/${dishId}/outlets${airportId ? `?airportId=${airportId}` : ''}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.dish && data.outlets) {

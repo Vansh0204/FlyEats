@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { FaArrowLeft, FaShoppingCart, FaPlus, FaMinus, FaMapMarkerAlt, FaClock } from 'react-icons/fa'
 import { formatCurrency } from '../utils'
+import { apiFetch } from '../lib/api'
 
 interface MenuItem {
   id: string
@@ -44,7 +45,7 @@ export default function OutletDetail() {
   const [showCart, setShowCart] = useState(false)
 
   useEffect(() => {
-    fetch(`/api/outlets/${id}`)
+    apiFetch(`/api/outlets/${id}`)
       .then((res) => res.json())
       .then((data) => {
         setOutlet(data.outlet)

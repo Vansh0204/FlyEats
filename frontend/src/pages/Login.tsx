@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { FaPlane, FaArrowLeft } from 'react-icons/fa'
+import { apiFetch } from '../lib/api'
 
 async function checkUserBooking(userId: string): Promise<boolean> {
   try {
-    const response = await fetch(`/api/pnr/user/${userId}`)
+    const response = await apiFetch(`/api/pnr/user/${userId}`)
     if (response.ok) {
       const data = await response.json()
       return !!data.booking
@@ -31,7 +32,7 @@ export default function Login() {
     setError('')
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

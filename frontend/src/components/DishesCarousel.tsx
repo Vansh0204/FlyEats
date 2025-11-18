@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Carousel, Card } from './ui/apple-cards-carousel'
 import { useLocation } from '../hooks/useLocation'
 import { FaMapMarkerAlt } from 'react-icons/fa'
+import { apiFetch } from '../lib/api'
 
 interface Dish {
   id: string
@@ -45,7 +46,7 @@ export default function DishesCarousel() {
     }
 
     setLoading(true)
-    fetch(apiUrl)
+    apiFetch(apiUrl)
       .then((res) => {
         if (!res.ok) {
           throw new Error('Failed to fetch dishes')
@@ -77,7 +78,7 @@ export default function DishesCarousel() {
     } else {
       // User is logged in, check if they have PNR
       try {
-        const response = await fetch(`/api/pnr/user/${userId}`)
+        const response = await apiFetch(`/api/pnr/user/${userId}`)
         const data = await response.json()
         const hasBooking = !!data.booking
 

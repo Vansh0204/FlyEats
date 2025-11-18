@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FaPlane, FaArrowLeft, FaMapMarkerAlt, FaClock } from 'react-icons/fa'
+import { apiFetch } from '../lib/api'
 
 export default function PnrInput() {
   const navigate = useNavigate()
@@ -25,7 +26,7 @@ export default function PnrInput() {
     setError('')
 
     try {
-      const response = await fetch('/api/pnr/lookup', {
+      const response = await apiFetch('/api/pnr/lookup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -39,7 +40,7 @@ export default function PnrInput() {
         setPnrData(data)
         
         // Save PNR to user's account
-        await fetch('/api/pnr/save', {
+        await apiFetch('/api/pnr/save', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

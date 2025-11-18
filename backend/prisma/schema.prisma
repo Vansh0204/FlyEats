@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  orders    Order[]
+  bookings  Booking[]
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  userId      String
+  pnr         String   @unique
+  flightNumber String?
+  gateNumber  String?
+  terminal    String?
+  boardingTime DateTime?
+  airportId   String?
+  airportCode String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  airport     Airport? @relation(fields: [airportId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([pnr])
+}
+
+model Airport {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  city      String
+  country   String
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  gates     Gate[]
+  outlets   Outlet[]
+  bookings  Booking[]
+}
+
+model Gate {
+  id        String   @id @default(cuid())
+  airportId String
+  number    String
+  terminal  String?
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  airport   Airport  @relation(fields: [airportId], references: [id], onDelete: Cascade)
+  
+  @@unique([airportId, number])
+}
+
+model Outlet {
+  id          String   @id @default(cuid())
+  airportId   String
+  name        String
+  description String?
+  category    String   // e.g., "Fast Food", "Coffee", "Fine Dining"
+  latitude    Float?
+  longitude   Float?
+  terminal    String?
+  image       String?
+  openTime    String   // e.g., "06:00"
+  closeTime   String   // e.g., "22:00"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  airport     Airport  @relation(fields: [airportId], references: [id], onDelete: Cascade)
+  menuItems   MenuItem[]
+  orders      Order[]
+  
+  @@index([airportId])
+}
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  outletId    String
+  name        String
+  description String?
+  price       Float
+  image       String?
+  category    String?  // e.g., "Main Course", "Beverage", "Dessert"
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  outlet      Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+  
+  @@index([outletId])
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  userId          String
+  outletId        String
+  airportId       String
+  gateNumber      String?     // User's boarding gate
+  status          String      @default("PENDING")
+  totalAmount     Float
+  preOrderTime    DateTime?   // When user wants the food
+  deliveryAddress String?     // Specific location in airport
+  specialNotes    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  user            User        @relation(fields: [userId], references: [id])
+  outlet          Outlet      @relation(fields: [outletId], references: [id])
+  items           OrderItem[]
+  delivery        Delivery?
+  
+  @@index([userId])
+  @@index([outletId])
+  @@index([status])
+}
+
+model OrderItem {
+  id         String @id @default(cuid())
+  orderId    String
+  menuItemId String
+  quantity   Int
+  price      Float  // Price at time of order
+  specialRequests String?
+  createdAt  DateTime @default(now())
+  
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  
+  @@index([orderId])
+}
+
+// OrderStatus enum values: PENDING, CONFIRMED, PREPARING, READY, OUT_FOR_DELIVERY, DELIVERED, CANCELLED
+
+model Delivery {
+  id              String         @id @default(cuid())
+  orderId         String         @unique
+  status          String         @default("PENDING")
+  deliveryPersonName String?
+  estimatedTime   DateTime?
+  deliveredAt     DateTime?
+  trackingNotes   String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  order           Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  @@index([status])
+}
+
+// DeliveryStatus enum values: PENDING, ASSIGNED, PICKED_UP, IN_TRANSIT, DELIVERED, FAILED
+

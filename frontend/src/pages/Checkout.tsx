@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { FaArrowLeft, FaClock, FaMapMarkerAlt } from 'react-icons/fa'
 import { formatCurrency } from '../utils'
+import { apiFetch } from '../lib/api'
 
 interface CartItem {
   id: string
@@ -36,7 +37,7 @@ export default function Checkout() {
     // Fetch user's booking (PNR) data to pre-fill gate and boarding time
     const userId = sessionStorage.getItem('userId')
     if (userId) {
-      fetch(`/api/pnr/user/${userId}`)
+      apiFetch(`/api/pnr/user/${userId}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.booking) {
@@ -75,7 +76,7 @@ export default function Checkout() {
         ? new Date(preOrderTime).toISOString()
         : undefined
 
-      const response = await fetch('/api/orders', {
+      const response = await apiFetch('/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

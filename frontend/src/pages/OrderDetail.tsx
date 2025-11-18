@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { FaArrowLeft, FaCheckCircle, FaClock, FaSpinner, FaTruck, FaMapMarkerAlt } from 'react-icons/fa'
 import { formatCurrency, formatTime } from '../utils'
+import { apiFetch } from '../lib/api'
 
 interface OrderItem {
   id: string
@@ -52,7 +53,7 @@ export default function OrderDetail() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`/api/orders/${id}`)
+    apiFetch(`/api/orders/${id}`)
       .then((res) => res.json())
       .then((data) => {
         setOrder(data.order)
@@ -64,7 +65,7 @@ export default function OrderDetail() {
       })
 
     const interval = setInterval(() => {
-      fetch(`/api/orders/${id}`)
+      apiFetch(`/api/orders/${id}`)
         .then((res) => res.json())
         .then((data) => {
           setOrder(data.order)

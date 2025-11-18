@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FaPlane, FaArrowLeft } from 'react-icons/fa'
+import { apiFetch } from '../lib/api'
 
 interface Airport {
   id: string
@@ -16,7 +17,7 @@ export default function AirportsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/airports')
+    apiFetch('/api/airports')
       .then((res) => res.json())
       .then((data) => {
         setAirports(data.airports || [])

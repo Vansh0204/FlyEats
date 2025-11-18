@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { FaArrowLeft, FaMapMarkerAlt, FaUtensils, FaSearch } from 'react-icons/fa'
+import { apiFetch } from '../lib/api'
 
 interface Outlet {
   id: string
@@ -23,7 +24,7 @@ export default function Outlets() {
 
   useEffect(() => {
     const url = `/api/outlets?airportId=${id}${gateNumber ? `&gateNumber=${gateNumber}` : ''}${category ? `&category=${category}` : ''}`
-    fetch(url)
+    apiFetch(url)
       .then((res) => res.json())
       .then((data) => {
         setOutlets(data.outlets || [])

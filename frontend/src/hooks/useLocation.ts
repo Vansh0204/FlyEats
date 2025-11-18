@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { apiFetch } from '../lib/api'
 
 interface Location {
   latitude: number
@@ -35,7 +36,7 @@ export function useLocation() {
 
         // Find nearest airport
         try {
-          const response = await fetch(
+          const response = await apiFetch(
             `/api/airports/nearest?lat=${latitude}&lng=${longitude}`
           )
           if (response.ok) {

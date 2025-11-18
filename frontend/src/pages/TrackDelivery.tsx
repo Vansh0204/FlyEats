@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { FaArrowLeft, FaTruck, FaCheckCircle, FaClock, FaSpinner, FaMapMarkerAlt } from 'react-icons/fa'
+import { apiFetch } from '../lib/api'
 
 interface Delivery {
   id: string
@@ -34,7 +35,7 @@ export default function TrackDelivery() {
 
   useEffect(() => {
     const fetchDelivery = () => {
-      fetch(`/api/delivery/${id}/track`)
+      apiFetch(`/api/delivery/${id}/track`)
         .then((res) => res.json())
         .then((data) => {
           setDelivery(data.delivery)

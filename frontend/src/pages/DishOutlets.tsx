@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
-import { FaArrowLeft, FaMapMarkerAlt, FaClock, FaShoppingBag, FaStore } from 'react-icons/fa'
+import { FaArrowLeft, FaMapMarkerAlt, FaShoppingBag, FaStore } from 'react-icons/fa'
 import { formatCurrency } from '../utils'
 import { apiFetch } from '../lib/api'
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { FaPlane, FaArrowLeft, FaMapMarkerAlt, FaClock } from 'react-icons/fa'
+import { FaPlane, FaMapMarkerAlt, FaClock } from 'react-icons/fa'
 import { apiFetch } from '../lib/api'
 
 export default function PnrInput() {

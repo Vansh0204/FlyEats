@@ -37,18 +37,30 @@ export function useLocation() {
         // Find nearest airport
         try {
           const response = await apiFetch(
-            `/api/airports/nearest?lat=${latitude}&lng=${longitude}`
+            `/api/airports/nearest?lat=${latitude}&lng=${longitude}`,
+            { timeoutMs: 20000, retries: 2, retryDelayMs: 1500 }
           )
           if (response.ok) {
             const data = await response.json()
             console.log('✈️ Nearest airport:', data.airport)
             setNearestAirport(data.airport)
           } else {
-            const errorData = await response.json()
-            console.error('Error response:', errorData)
+            try {
+              const errorData = await response.json()
+              console.error('Error response:', errorData)
+              setError(errorData?.error || `Request failed with status ${response.status}`)
+            } catch (e) {
+              console.error('Non-JSON error response')
+              setError(`Request failed with status ${response.status}`)
+            }
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error('Error finding nearest airport:', err)
+          if (err?.name === 'AbortError') {
+            setError('Backend is waking up, please wait and try again…')
+          } else {
+            setError('Unable to reach the backend. Please retry in a moment.')
+          }
         }
         setLoading(false)
       },

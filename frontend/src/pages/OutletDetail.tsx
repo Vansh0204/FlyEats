@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { FaArrowLeft, FaShoppingCart, FaPlus, FaMinus, FaMapMarkerAlt, FaClock } from 'react-icons/fa'
 import { formatCurrency } from '../utils'
 import { apiFetch } from '../lib/api'
@@ -34,7 +34,7 @@ interface CartItem extends MenuItem {
 export default function OutletDetail() {
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
   const airportId = searchParams.get('airportId') || ''
   const gateNumber = searchParams.get('gate') || ''
   

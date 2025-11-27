@@ -38,7 +38,7 @@ export default function PnrInput() {
 
       if (response.ok) {
         setPnrData(data)
-        
+
         // Save PNR to user's account
         await apiFetch('/api/pnr/save', {
           method: 'POST',
@@ -140,36 +140,9 @@ export default function PnrInput() {
             </button>
           </form>
 
-          <button
-            onClick={() => {
-              // Clear any pending outlet when skipping
-              sessionStorage.removeItem('pendingOutlet')
-              
-              // If redirect is /airports, try to get nearest airport and go to its outlets
-              if (redirect === '/airports' || redirect.includes('/airports')) {
-                // Try to get airport ID from nearest airport or redirect to airports list
-                const nearestAirport = sessionStorage.getItem('nearestAirport')
-                if (nearestAirport) {
-                  try {
-                    const airport = JSON.parse(nearestAirport)
-                    navigate(`/airports/${airport.id}/outlets`)
-                  } catch {
-                    navigate('/airports')
-                  }
-                } else {
-                  navigate('/airports')
-                }
-              } else {
-                navigate(redirect)
-              }
-            }}
-            className="w-full mt-4 px-6 py-2 text-gray-600 hover:text-orange-600 transition-colors"
-          >
-            Skip for now
-          </button>
+
         </div>
       </div>
     </div>
   )
 }
-

@@ -1,4 +1,5 @@
 import express from 'express'
+// Restart server for DB change
 import cors from 'cors'
 import authRoutes from './routes/auth'
 import airportsRoutes from './routes/airports'
@@ -7,6 +8,7 @@ import ordersRoutes from './routes/orders'
 import deliveryRoutes from './routes/delivery'
 import dishesRoutes from './routes/dishes'
 import pnrRoutes from './routes/pnr'
+import aiRoutes from './routes/ai'
 
 const app = express()
 const PORT = process.env.PORT || 5001
@@ -15,6 +17,8 @@ const PORT = process.env.PORT || 5001
 const defaultAllowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3001',
   'https://fly-eats.vercel.app'
 ]
 const allowedOrigins = (process.env.CORS_ORIGINS
@@ -46,6 +50,7 @@ app.use('/api/orders', ordersRoutes)
 app.use('/api/delivery', deliveryRoutes)
 app.use('/api/dishes', dishesRoutes)
 app.use('/api/pnr', pnrRoutes)
+app.use('/api/ai', aiRoutes)
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'FlyEats API is running' })
@@ -54,4 +59,3 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`)
 })
-

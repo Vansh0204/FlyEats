@@ -5,7 +5,24 @@ const prisma = new PrismaClient()
 
 async function main() {
   console.log('Seeding database...')
+  console.log('Seeding database...')
 
+  // Clean up existing data
+  // Clean up existing data
+  await prisma.delivery.deleteMany()
+  await prisma.orderItem.deleteMany()
+  await prisma.order.deleteMany()
+  await prisma.menuItem.deleteMany()
+  await prisma.outlet.deleteMany()
+  await prisma.booking.deleteMany()
+  await prisma.gate.deleteMany()
+  await prisma.airport.deleteMany()
+  await prisma.user.deleteMany()
+  await prisma.outlet.deleteMany()
+  await prisma.gate.deleteMany()
+  await prisma.airport.deleteMany()
+  await prisma.user.deleteMany()
+  console.log('Cleaned up existing data')
   // Create a test user
   const hashedPassword = await bcrypt.hash('password123', 12)
   const user = await prisma.user.upsert({
@@ -94,6 +111,7 @@ async function main() {
       airportId: delhiAirport.id,
       latitude: 28.5563,
       longitude: 77.1002,
+      image: 'https://placehold.co/600x400/orange/white?text=Starbucks',
       openTime: '05:00',
       closeTime: '23:00',
       menuItems: {
@@ -116,6 +134,7 @@ async function main() {
       airportId: delhiAirport.id,
       latitude: 28.5566,
       longitude: 77.1006,
+      image: 'https://placehold.co/600x400/red/white?text=McDonalds',
       openTime: '06:00',
       closeTime: '22:00',
       menuItems: {
@@ -138,6 +157,7 @@ async function main() {
       airportId: delhiAirport.id,
       latitude: 28.5559,
       longitude: 77.0996,
+      image: 'https://placehold.co/600x400/red/white?text=Pizza+Hut',
       openTime: '07:00',
       closeTime: '23:00',
       menuItems: {
@@ -161,6 +181,7 @@ async function main() {
       airportId: mumbaiAirport.id,
       latitude: 19.0897,
       longitude: 72.8657,
+      image: 'https://placehold.co/600x400/brown/white?text=CCD',
       openTime: '05:30',
       closeTime: '23:30',
       menuItems: {
@@ -182,6 +203,7 @@ async function main() {
       airportId: mumbaiAirport.id,
       latitude: 19.0901,
       longitude: 72.8661,
+      image: 'https://placehold.co/600x400/green/white?text=Subway',
       openTime: '06:00',
       closeTime: '22:00',
       menuItems: {
@@ -204,6 +226,7 @@ async function main() {
       airportId: puneAirport.id,
       latitude: 18.5823,
       longitude: 73.9198,
+      image: 'https://placehold.co/600x400/orange/white?text=Starbucks',
       openTime: '05:00',
       closeTime: '23:00',
       menuItems: {
@@ -226,6 +249,7 @@ async function main() {
       airportId: puneAirport.id,
       latitude: 18.5824,
       longitude: 73.9199,
+      image: 'https://placehold.co/600x400/red/white?text=Pizza+Hut',
       openTime: '07:00',
       closeTime: '23:00',
       menuItems: {
@@ -248,6 +272,7 @@ async function main() {
       airportId: puneAirport.id,
       latitude: 18.5825,
       longitude: 73.9200,
+      image: 'https://placehold.co/600x400/brown/white?text=CCD',
       openTime: '05:30',
       closeTime: '23:30',
       menuItems: {
@@ -266,43 +291,43 @@ async function main() {
   // Add more diverse dishes to existing outlets
   await prisma.menuItem.create({
     data: { name: 'Chicken Biryani', description: 'Aromatic basmati rice with tender chicken and spices', price: 450, category: 'Main Course', image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=800&h=600&fit=crop', outletId: mcdonalds.id, isAvailable: true },
-  }).catch(() => {})
-  
+  }).catch(() => { })
+
   await prisma.menuItem.create({
     data: { name: 'Hakka Noodles', description: 'Stir-fried noodles with vegetables and soy sauce', price: 320, category: 'Main Course', image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&h=600&fit=crop', outletId: pizzaHut.id, isAvailable: true },
-  }).catch(() => {})
-  
+  }).catch(() => { })
+
   await prisma.menuItem.create({
     data: { name: 'Chicken Roll', description: 'Spiced chicken wrapped in paratha with fresh veggies', price: 180, category: 'Main Course', image: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=800&h=600&fit=crop', outletId: subway.id, isAvailable: true },
-  }).catch(() => {})
-  
+  }).catch(() => { })
+
   await prisma.menuItem.create({
     data: { name: 'Chicken Shawarma', description: 'Marinated chicken with tahini and fresh vegetables', price: 280, category: 'Main Course', image: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=800&h=600&fit=crop', outletId: subway.id, isAvailable: true },
-  }).catch(() => {})
-  
+  }).catch(() => { })
+
   await prisma.menuItem.create({
     data: { name: 'Chocolate Ice Cream', description: 'Rich chocolate ice cream with toppings', price: 150, category: 'Dessert', image: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800&h=600&fit=crop', outletId: starbucks.id, isAvailable: true },
-  }).catch(() => {})
-  
+  }).catch(() => { })
+
   await prisma.menuItem.create({
     data: { name: 'Dal Khichdi', description: 'Comforting rice and lentil dish with ghee', price: 200, category: 'Main Course', image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&h=600&fit=crop', outletId: cafeCoffeeDay.id, isAvailable: true },
-  }).catch(() => {})
-  
+  }).catch(() => { })
+
   await prisma.menuItem.create({
     data: { name: 'Penne Arrabbiata', description: 'Spicy tomato pasta with herbs', price: 380, category: 'Main Course', image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800&h=600&fit=crop', outletId: pizzaHut.id, isAvailable: true },
-  }).catch(() => {})
-  
+  }).catch(() => { })
+
   await prisma.menuItem.create({
     data: { name: 'Butter Paratha', description: 'Flaky layered flatbread with butter', price: 80, category: 'Main Course', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&h=600&fit=crop', outletId: cafeCoffeeDay.id, isAvailable: true },
-  }).catch(() => {})
-  
+  }).catch(() => { })
+
   await prisma.menuItem.create({
     data: { name: 'Chocolate Shake', description: 'Creamy chocolate milkshake with whipped cream', price: 200, category: 'Beverage', image: 'https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=800&h=600&fit=crop', outletId: starbucks.id, isAvailable: true },
-  }).catch(() => {})
-  
+  }).catch(() => { })
+
   await prisma.menuItem.create({
     data: { name: 'Poha', description: 'Flattened rice with onions, peanuts, and spices', price: 120, category: 'Main Course', image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&h=600&fit=crop', outletId: cafeCoffeeDay.id, isAvailable: true },
-  }).catch(() => {})
+  }).catch(() => { })
 
   console.log('Created outlets:', [starbucks.name, mcdonalds.name, pizzaHut.name, cafeCoffeeDay.name, subway.name])
   console.log('Seeding completed!')

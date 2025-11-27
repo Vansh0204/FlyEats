@@ -1,4 +1,4 @@
-const RAW_API_BASE = (import.meta.env.VITE_API_URL || 'https://flyeats.onrender.com').replace(/\/$/, '')
+const RAW_API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '')
 const API_BASE = RAW_API_BASE
 
 // Add timeout and retry support to mitigate cold starts or transient errors

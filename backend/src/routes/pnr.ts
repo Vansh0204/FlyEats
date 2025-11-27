@@ -18,21 +18,40 @@ router.post('/lookup', async (req, res) => {
     // - Sabre API
     // - Airline-specific APIs
     // For now, we'll simulate based on PNR patterns
-    
+
     // Simulate PNR lookup - extract info from PNR format
     // Real PNRs are usually 6-10 alphanumeric characters
     const pnrUpper = pnr.toUpperCase()
-    
-    // Simulate flight data based on PNR
-    // In real implementation, this would be an API call to airline systems
-    const simulatedData = {
-      // Extract airport codes from PNR pattern (this is simulated)
-      // Real implementation would parse actual flight data
-      flightNumber: `AI${Math.floor(Math.random() * 9000) + 1000}`, // Example: AI1234
-      gateNumber: `A${Math.floor(Math.random() * 20) + 1}`, // Example: A12
-      terminal: 'T1',
-      boardingTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
-      airportCode: 'PNQ', // Default to Pune, but would come from flight data
+
+    // Demo PNRs for showcase
+    let simulatedData
+    if (pnrUpper === 'DEMO01') {
+      // DEMO01: Tight timing scenario (30 minutes to boarding)
+      simulatedData = {
+        flightNumber: `AI2547`,
+        gateNumber: `A12`,
+        terminal: 'T3',
+        boardingTime: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes from now
+        airportCode: 'DEL', // Delhi
+      }
+    } else if (pnrUpper === 'DEMO02') {
+      // DEMO02: Plenty of time scenario (2 hours to boarding)
+      simulatedData = {
+        flightNumber: `AI1234`,
+        gateNumber: `B5`,
+        terminal: 'T3',
+        boardingTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
+        airportCode: 'DEL', // Delhi
+      }
+    } else {
+      // Default simulation for other PNRs
+      simulatedData = {
+        flightNumber: `AI${Math.floor(Math.random() * 9000) + 1000}`,
+        gateNumber: `A${Math.floor(Math.random() * 20) + 1}`,
+        terminal: 'T3',
+        boardingTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
+        airportCode: 'DEL', // Default to Delhi
+      }
     }
 
     // Try to find airport by code
@@ -79,27 +98,35 @@ router.post('/save', async (req, res) => {
     })
 
     let booking
-    if (existingBooking && existingBooking.userId === userId) {
-      // Update existing booking
-      booking = await prisma.booking.update({
-        where: { pnr },
-        data: {
-          flightNumber: flightNumber || existingBooking.flightNumber,
-          gateNumber: gateNumber || existingBooking.gateNumber,
-          terminal: terminal || existingBooking.terminal,
-          boardingTime: boardingTime ? new Date(boardingTime) : existingBooking.boardingTime,
-          airportId: airportId || existingBooking.airportId,
-        },
-        include: {
-          airport: {
-            select: {
-              id: true,
-              name: true,
-              code: true,
+    if (existingBooking) {
+      if (existingBooking.userId === userId) {
+        // Update existing booking
+        booking = await prisma.booking.update({
+          where: { pnr },
+          data: {
+            flightNumber: flightNumber || existingBooking.flightNumber,
+            gateNumber: gateNumber || existingBooking.gateNumber,
+            terminal: terminal || existingBooking.terminal,
+            boardingTime: boardingTime ? new Date(boardingTime) : existingBooking.boardingTime,
+            airportId: airportId || existingBooking.airportId,
+          },
+          include: {
+            airport: {
+              select: {
+                id: true,
+                name: true,
+                code: true,
+              },
             },
           },
-        },
-      })
+        })
+      } else {
+        // PNR exists but belongs to another user
+        // For development/testing, we might want to allow this, but for now let's return an error
+        // or we could update the userId to the new user (claiming it)
+        // Let's return an error to be safe
+        return res.status(400).json({ error: 'This PNR is already linked to another account.' })
+      }
     } else {
       // Create new booking
       booking = await prisma.booking.create({
@@ -110,7 +137,7 @@ router.post('/save', async (req, res) => {
           gateNumber,
           terminal,
           boardingTime: boardingTime ? new Date(boardingTime) : null,
-          airportId,
+          ...(airportId ? { airportId } : {}), // Only include airportId if provided and valid
         },
         include: {
           airport: {

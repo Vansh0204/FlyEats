@@ -25,6 +25,9 @@ export default function Checkout() {
   const [specialNotes, setSpecialNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const [booking, setBooking] = useState<any>(null)
+  const [outlet, setOutlet] = useState<any>(null)
+  const [timingWarning, setTimingWarning] = useState('')
+  const [timingValidating, setTimingValidating] = useState(false)
 
   useEffect(() => {
     const storedCart = sessionStorage.getItem('cart')
@@ -36,6 +39,7 @@ export default function Checkout() {
 
     // Fetch user's booking (PNR) data to pre-fill gate and boarding time
     const userId = sessionStorage.getItem('userId')
+
     if (userId) {
       apiFetch(`/api/pnr/user/${userId}`)
         .then((res) => res.json())
@@ -56,9 +60,83 @@ export default function Checkout() {
         })
         .catch((err) => console.error('Error fetching booking:', err))
     }
-  }, [navigate, gate, preOrderTime])
+
+    // Fetch outlet information
+    if (outletId) {
+      apiFetch(`/api/outlets/${outletId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.outlet) {
+            setOutlet(data.outlet)
+          }
+        })
+        .catch((err) => console.error('Error fetching outlet:', err))
+    }
+  }, [navigate, gate, preOrderTime, outletId])
 
   const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+
+
+  const validateTiming = async () => {
+    if (!booking?.boardingTime || cart.length === 0) return
+
+    setTimingValidating(true)
+    setTimingWarning('')
+
+    try {
+      const boardingTime = new Date(booking.boardingTime)
+      const now = new Date()
+      const minutesUntilBoarding = Math.floor((boardingTime.getTime() - now.getTime()) / (1000 * 60))
+
+      console.log('🔍 AI Timing Validation:', {
+        boardingTime: boardingTime.toLocaleTimeString(),
+        minutesUntilBoarding,
+        cart: cart.map(item => `${item.quantity}x ${item.name}`)
+      })
+
+      const response = await apiFetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `URGENT: My flight boards in ${minutesUntilBoarding} minutes at ${boardingTime.toLocaleTimeString()}. I'm ordering: ${cart.map(item => `${item.quantity}x ${item.name}`).join(', ')}. Is there enough time to prepare this order AND pick it up before boarding? If timing is tight (less than 45 minutes), warn me and suggest faster alternatives. Be direct and concise.`,
+          outletId,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log('🤖 AI Response:', data.response)
+
+        // Check if AI response contains warning keywords or if time is very tight
+        const warningKeywords = ['tight', 'rush', 'hurry', 'quick', 'fast', 'might not', 'may not', 'consider', 'suggest', 'recommend', 'warning', 'concern', 'risky', 'cut it close']
+        const hasWarning = warningKeywords.some(keyword =>
+          data.response.toLowerCase().includes(keyword)
+        )
+
+        // Force warning if less than 45 minutes
+        if (hasWarning || minutesUntilBoarding < 45) {
+          console.log('⚠️ Showing timing warning')
+          setTimingWarning(data.response)
+        } else {
+          console.log('✅ Timing is safe, no warning needed')
+        }
+      }
+    } catch (error) {
+      console.error('Error validating timing:', error)
+    } finally {
+      setTimingValidating(false)
+    }
+  }
+
+  // Validate timing when cart or boarding time changes
+  useEffect(() => {
+    if (booking?.boardingTime && cart.length > 0) {
+      const timer = setTimeout(() => {
+        validateTiming()
+      }, 1000) // Debounce
+      return () => clearTimeout(timer)
+    }
+  }, [cart, booking?.boardingTime])
 
   const handlePlaceOrder = async () => {
     const userId = sessionStorage.getItem('userId') || 'demo-user-id'
@@ -119,13 +197,49 @@ export default function Checkout() {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
           <Link to={`/outlets/${outletId}?airportId=${airportId}${gate ? `&gate=${gate}` : ''}`} className="text-gray-600 hover:text-orange-600">
-            <FaArrowLeft className= "text-xl" />
+            <FaArrowLeft className="text-xl" />
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">Checkout</h1>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-3xl">
+        {/* Outlet Pickup Location */}
+        {outlet && (
+          <div className="bg-gradient-to-r from-orange-50 to-orange-100 border-2 border-orange-300 rounded-xl shadow-md p-6 mb-6">
+            <h2 className="text-xl font-bold mb-3 flex items-center gap-2 text-gray-900">
+              <FaMapMarkerAlt className="text-orange-600" />
+              Pickup Location
+            </h2>
+            <div className="bg-white rounded-lg p-4 space-y-2">
+              <p className="text-lg font-semibold text-gray-900">{outlet.name}</p>
+              {outlet.terminal && (
+                <p className="text-gray-700">
+                  <span className="font-medium">Terminal:</span> {outlet.terminal}
+                </p>
+              )}
+              {outlet.description && (
+                <p className="text-gray-600 text-sm">{outlet.description}</p>
+              )}
+              <div className="flex items-center gap-2 text-sm text-gray-600 mt-3 pt-3 border-t">
+                <FaClock />
+                <span>Open: {outlet.openTime} - {outlet.closeTime}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* AI Timing Warning */}
+        {timingWarning && (
+          <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl shadow-md p-6 mb-6">
+            <h3 className="text-lg font-bold text-yellow-900 mb-2 flex items-center gap-2">
+              <FaClock className="text-yellow-600" />
+              Timing Alert
+            </h3>
+            <p className="text-yellow-800">{timingWarning}</p>
+          </div>
+        )}
+
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <h2 className="text-gray-700 text-xl font-bold mb-4">Order Summary</h2>
           <div className="space-y-3">
@@ -142,64 +256,6 @@ export default function Checkout() {
           <div className=" text-gray-700 flex justify-between text-xl font-bold">
             <span className='text-gray-700'>Total:</span>
             <span className="text-orange-600">{formatCurrency(totalAmount)}</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h2 className="text-gray-700 text-xl font-bold mb-4 flex items-center gap-2">
-            <FaMapMarkerAlt className="text-orange-500" />
-            Delivery Details
-          </h2>
-
-          {booking && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-green-800 mb-1">
-                <strong>Flight Info:</strong> {booking.flightNumber || 'N/A'}
-              </p>
-              {booking.terminal && (
-                <p className="text-sm text-green-800 mb-1">
-                  <strong>Terminal:</strong> {booking.terminal}
-                </p>
-              )}
-              {booking.boardingTime && (
-                <p className="text-sm text-green-800">
-                  <strong>Boarding Time:</strong> {new Date(booking.boardingTime).toLocaleString()}
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Boarding Gate Number {booking?.gateNumber && <span className="text-green-600">(from PNR)</span>}
-              </label>
-              <input
-                type="text"
-                value={gate}
-                onChange={(e) => setGate(e.target.value)}
-                placeholder="e.g., A12, B5"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 bg-white"
-                style={{ color: '#111827' }}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                This helps us find outlets closest to you
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Specific Delivery Location (Optional)
-              </label>
-              <input
-                type="text"
-                value={deliveryAddress}
-                onChange={(e) => setDeliveryAddress(e.target.value)}
-                placeholder="e.g., Gate A12, Terminal 1, Near Starbucks"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 bg-white"
-                style={{ color: '#111827' }}
-              />
-            </div>
           </div>
         </div>
 

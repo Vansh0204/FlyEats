@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
-import { FaArrowLeft, FaShoppingCart, FaPlus, FaMinus, FaMapMarkerAlt, FaClock } from 'react-icons/fa'
+import { FaArrowLeft, FaShoppingCart, FaPlus, FaMinus, FaMapMarkerAlt, FaClock, FaTrash, FaShoppingBasket, FaUtensils } from 'react-icons/fa'
 import { formatCurrency } from '../utils'
 import { apiFetch } from '../lib/api'
 
@@ -37,7 +37,7 @@ export default function OutletDetail() {
   // const navigate = useNavigate()
   const airportId = searchParams.get('airportId') || ''
   const gateNumber = searchParams.get('gate') || ''
-  
+
   const [outlet, setOutlet] = useState<Outlet | null>(null)
   const [loading, setLoading] = useState(true)
   const [cart, setCart] = useState<CartItem[]>([])
@@ -73,7 +73,6 @@ export default function OutletDetail() {
       }
       return [...prev, { ...item, quantity: 1 }]
     })
-    setShowCart(true)
   }
 
   const removeFromCart = (itemId: string) => {
@@ -95,7 +94,9 @@ export default function OutletDetail() {
     )
   }
 
-  const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const tax = subtotal * 0.05 // 5% tax
+  const totalAmount = subtotal + tax
 
   if (loading) {
     return (
@@ -176,11 +177,10 @@ export default function OutletDetail() {
           <div className="mb-6 flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedCategory('')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                selectedCategory === ''
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
-              }`}
+              className={`px-4 py-2 rounded-lg transition-colors ${selectedCategory === ''
+                ? 'bg-orange-500 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
             >
               All
             </button>
@@ -188,11 +188,10 @@ export default function OutletDetail() {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  selectedCategory === category
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
+                className={`px-4 py-2 rounded-lg transition-colors ${selectedCategory === category
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
               >
                 {category}
               </button>
@@ -206,8 +205,24 @@ export default function OutletDetail() {
             return (
               <div key={item.id} className="bg-white rounded-xl shadow-md p-4">
                 <div className="flex justify-between items-start gap-4">
+                  <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://placehold.co/400x300?text=No+Image'
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <FaUtensils className="text-2xl" />
+                      </div>
+                    )}
+                  </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
+                    <h3 className="font-semibold text-lg mb-1 text-gray-900">{item.name}</h3>
                     {item.description && (
                       <p className="text-gray-600 text-sm mb-2">{item.description}</p>
                     )}
@@ -221,7 +236,7 @@ export default function OutletDetail() {
                       >
                         <FaMinus />
                       </button>
-                      <span className="font-semibold w-8 text-center">{cartItem.quantity}</span>
+                      <span className="font-semibold w-8 text-center text-gray-900">{cartItem.quantity}</span>
                       <button
                         onClick={() => updateQuantity(item.id, 1)}
                         className="text-orange-600 hover:text-orange-700"
@@ -246,64 +261,122 @@ export default function OutletDetail() {
       </main>
 
       {showCart && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => setShowCart(false)}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 backdrop-blur-sm" onClick={() => setShowCart(false)}>
           <div
-            className="fixed right-0 top-0 h-full w-full md:w-96 bg-white shadow-xl overflow-y-auto"
+            className="fixed right-0 top-0 h-full w-full md:w-[450px] bg-white shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Your Cart</h2>
-                <button
-                  onClick={() => setShowCart(false)}
-                  className="text-gray-600 hover:text-gray-900"
-                >
-                  ×
-                </button>
-              </div>
+            <div className="p-6 border-b flex items-center justify-between bg-white z-10">
+              <h2 className="text-2xl font-bold flex items-center gap-2 text-gray-900">
+                <FaShoppingCart className="text-orange-500" />
+                Your Cart
+              </h2>
+              <button
+                onClick={() => setShowCart(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
+              >
+                <span className="text-2xl leading-none">&times;</span>
+              </button>
+            </div>
 
+            <div className="flex-1 overflow-y-auto p-6">
               {cart.length === 0 ? (
-                <p className="text-gray-600 text-center py-8">Your cart is empty</p>
+                <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-4">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
+                    <FaShoppingBasket className="text-4xl text-gray-400" />
+                  </div>
+                  <p className="text-lg font-medium text-gray-900">Your cart is empty</p>
+                  <p className="text-sm">Looks like you haven't added anything yet.</p>
+                  <button
+                    onClick={() => setShowCart(false)}
+                    className="mt-4 px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                  >
+                    Start Ordering
+                  </button>
+                </div>
               ) : (
-                <>
-                  <div className="space-y-4 mb-6">
-                    {cart.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between border-b pb-4">
-                        <div className="flex-1">
-                          <h3 className="font-semibold">{item.name}</h3>
-                          <p className="text-sm text-gray-600">{formatCurrency(item.price)} × {item.quantity}</p>
+                <div className="space-y-6">
+                  {cart.map((item) => (
+                    <div key={item.id} className="flex gap-4">
+                      {/* Item Image */}
+                      <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+                        {item.image ? (
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400">
+                            <FaShoppingCart />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Item Details */}
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-semibold text-gray-900 line-clamp-1">{item.name}</h3>
+                            <span className="font-semibold text-gray-900">{formatCurrency(item.price * item.quantity)}</span>
+                          </div>
+                          <p className="text-sm text-gray-500">{formatCurrency(item.price)} each</p>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="font-semibold">{formatCurrency(item.price * item.quantity)}</span>
+
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-1">
+                            <button
+                              onClick={() => updateQuantity(item.id, -1)}
+                              className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-gray-600 hover:text-orange-600 transition-colors"
+                            >
+                              <FaMinus size={10} />
+                            </button>
+                            <span className="font-semibold w-6 text-center text-sm text-gray-900">{item.quantity}</span>
+                            <button
+                              onClick={() => updateQuantity(item.id, 1)}
+                              className="w-8 h-8 flex items-center justify-center bg-white rounded-md shadow-sm text-gray-600 hover:text-orange-600 transition-colors"
+                            >
+                              <FaPlus size={10} />
+                            </button>
+                          </div>
                           <button
                             onClick={() => removeFromCart(item.id)}
-                            className="text-red-500 hover:text-red-700"
+                            className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Remove item"
                           >
-                            ×
+                            <FaTrash size={14} />
                           </button>
                         </div>
                       </div>
-                    ))}
-                  </div>
-
-                  <div className="border-t pt-4 mb-6">
-                    <div className="flex justify-between text-xl font-bold mb-6">
-                      <span>Total:</span>
-                      <span className="text-orange-600">{formatCurrency(totalAmount)}</span>
                     </div>
-                    <Link
-                      to={`/checkout?outletId=${outlet.id}&airportId=${airportId}${gateNumber ? `&gate=${gateNumber}` : ''}`}
-                      onClick={() => {
-                        sessionStorage.setItem('cart', JSON.stringify(cart))
-                      }}
-                      className="block w-full px-6 py-3 bg-orange-500 text-white text-center rounded-lg hover:bg-orange-600 transition-colors font-semibold"
-                    >
-                      Proceed to Checkout
-                    </Link>
-                  </div>
-                </>
+                  ))}
+                </div>
               )}
             </div>
+
+            {cart.length > 0 && (
+              <div className="border-t bg-gray-50 p-6 space-y-4">
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Subtotal</span>
+                    <span>{formatCurrency(subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>Tax (5%)</span>
+                    <span>{formatCurrency(tax)}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t">
+                    <span>Total</span>
+                    <span className="text-orange-600">{formatCurrency(totalAmount)}</span>
+                  </div>
+                </div>
+                <Link
+                  to={`/checkout?outletId=${outlet.id}&airportId=${airportId}${gateNumber ? `&gate=${gateNumber}` : ''}`}
+                  onClick={() => {
+                    sessionStorage.setItem('cart', JSON.stringify(cart))
+                  }}
+                  className="block w-full py-3.5 bg-orange-500 text-white text-center rounded-xl hover:bg-orange-600 transition-all shadow-lg hover:shadow-orange-500/30 font-semibold text-lg"
+                >
+                  Proceed to Checkout
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}

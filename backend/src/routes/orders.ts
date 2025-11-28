@@ -166,5 +166,89 @@ router.get('/:id', async (req, res) => {
   }
 })
 
+// Get order queue position
+router.get('/:id/queue', async (req, res) => {
+  try {
+    const { id } = req.params
+
+    // Get the user's order
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: {
+            menuItem: true,
+          },
+        },
+        outlet: {
+          select: {
+            id: true,
+            name: true,
+            terminal: true,
+          },
+        },
+      },
+    })
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' })
+    }
+
+    // Only show queue for active orders
+    const activeStatuses = ['PENDING', 'CONFIRMED', 'PREPARING']
+    if (!activeStatuses.includes(order.status)) {
+      return res.json({
+        order,
+        queuePosition: 0,
+        ordersAhead: [],
+        estimatedWaitMinutes: 0,
+        message: 'Order is no longer in queue',
+      })
+    }
+
+    // Get all active orders from the same outlet placed before this order
+    const ordersAhead = await prisma.order.findMany({
+      where: {
+        outletId: order.outletId,
+        status: { in: activeStatuses },
+        createdAt: { lt: order.createdAt },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        status: true,
+        totalAmount: true,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    })
+
+    // Calculate queue position (1-indexed)
+    const queuePosition = ordersAhead.length + 1
+
+    // Estimate wait time (10 minutes per order ahead)
+    const avgPrepTimeMinutes = 10
+    const estimatedWaitMinutes = ordersAhead.length * avgPrepTimeMinutes
+
+    return res.json({
+      order,
+      queuePosition,
+      ordersAhead: ordersAhead.map((o, index) => ({
+        position: index + 1,
+        orderNumber: o.id.slice(-6).toUpperCase(), // Last 6 chars as order number
+        placedAt: o.createdAt,
+        status: o.status,
+      })),
+      estimatedWaitMinutes,
+      totalInQueue: queuePosition,
+    })
+  } catch (error) {
+    console.error('Error fetching order queue:', error)
+    return res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 export default router
+
 

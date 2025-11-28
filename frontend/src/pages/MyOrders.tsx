@@ -157,9 +157,22 @@ export default function MyOrders() {
                                         <span className="text-lg font-bold text-orange-600">
                                             {formatCurrency(order.totalAmount)}
                                         </span>
-                                        <span className="text-sm text-orange-600 font-semibold hover:underline">
-                                            View Details →
-                                        </span>
+                                        <div className="flex items-center gap-3">
+                                            {['PENDING', 'CONFIRMED', 'PREPARING'].includes(order.status) && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault()
+                                                        navigate(`/orders/${order.id}/queue`)
+                                                    }}
+                                                    className="px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors font-semibold text-sm"
+                                                >
+                                                    View Queue
+                                                </button>
+                                            )}
+                                            <span className="text-sm text-orange-600 font-semibold hover:underline">
+                                                View Details →
+                                            </span>
+                                        </div>
                                     </div>
                                 </Link>
                             )

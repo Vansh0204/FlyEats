@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { FaPlane, FaArrowLeft } from 'react-icons/fa'
+import { useAuth } from '../contexts/AuthContext'
 import { apiFetch } from '../lib/api'
 import { useToast } from '../components/ToastProvider'
 
@@ -22,6 +23,7 @@ export default function Login() {
   const [searchParams] = useSearchParams()
   const redirect = searchParams.get('redirect') || '/airports'
   const { showToast } = useToast()
+  const { login } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -35,66 +37,50 @@ export default function Login() {
     setError('')
 
     try {
-      const response = await apiFetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
+      await login(email, password)
 
-      const data = await response.json()
+      showToast('Login successful! Welcome back.', 'success')
 
-      if (response.ok) {
-        sessionStorage.setItem('userId', data.user.id)
-        sessionStorage.setItem('user', JSON.stringify(data.user))
+      // Check if there's a pending outlet or if user needs to enter PNR
+      const pendingOutlet = sessionStorage.getItem('pendingOutlet')
 
-        // Trigger storage event to update other components
-        window.dispatchEvent(new Event('storage'))
+      // Get user ID from the login response
+      const response = await apiFetch('/api/auth/me')
+      const { user } = await response.json()
+      const hasBooking = await checkUserBooking(user.id)
 
-        showToast('Login successful! Welcome back.', 'success')
+      if (pendingOutlet) {
+        // User clicked a dish/outlet, check if they have PNR
+        const outletData = JSON.parse(pendingOutlet)
+        sessionStorage.removeItem('pendingOutlet')
 
-        // Check if there's a pending outlet or if user needs to enter PNR
-        const pendingOutlet = sessionStorage.getItem('pendingOutlet')
-        const hasBooking = await checkUserBooking(data.user.id)
-
-        if (pendingOutlet) {
-          // User clicked a dish/outlet, check if they have PNR
-          const outletData = JSON.parse(pendingOutlet)
-          sessionStorage.removeItem('pendingOutlet')
-
-          if (!hasBooking) {
-            // No PNR, ask for it, then go to outlet
-            navigate(`/pnr?redirect=/outlets/${outletData.outletId}?airportId=${outletData.airportId}`)
-          } else {
-            // Has PNR, go directly to outlet
-            navigate(`/outlets/${outletData.outletId}?airportId=${outletData.airportId}`)
-          }
+        if (!hasBooking) {
+          // No PNR, ask for it, then go to outlet
+          navigate(`/pnr?redirect=/outlets/${outletData.outletId}?airportId=${outletData.airportId}`)
         } else {
-          // For all other cases, check PNR first
-          if (!hasBooking) {
-            // If redirect is already /pnr, don't loop
-            if (redirect.startsWith('/pnr')) {
-              navigate(redirect)
-            } else {
-              // Redirect to PNR, then to original destination
-              navigate(`/pnr?redirect=${encodeURIComponent(redirect)}`)
-            }
-          } else {
-            navigate(redirect)
-          }
+          // Has PNR, go directly to outlet
+          navigate(`/outlets/${outletData.outletId}?airportId=${outletData.airportId}`)
         }
       } else {
-        setError(data.error || 'Login failed')
-        setShake(true)
-        setTimeout(() => setShake(false), 500)
-        showToast(data.error || 'Login failed', 'error')
+        // For all other cases, check PNR first
+        if (!hasBooking) {
+          // If redirect is already /pnr, don't loop
+          if (redirect.startsWith('/pnr')) {
+            navigate(redirect)
+          } else {
+            // Redirect to PNR, then to original destination
+            navigate(`/pnr?redirect=${encodeURIComponent(redirect)}`)
+          }
+        } else {
+          navigate(redirect)
+        }
       }
-    } catch (err) {
-      setError('An error occurred. Please try again.')
+    } catch (err: any) {
+      const errorMessage = err.message || 'An error occurred. Please try again.'
+      setError(errorMessage)
       setShake(true)
       setTimeout(() => setShake(false), 500)
-      showToast('An error occurred. Please try again.', 'error')
+      showToast(errorMessage, 'error')
     } finally {
       setLoading(false)
     }

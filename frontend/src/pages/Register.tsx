@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { FaPlane, FaArrowLeft } from 'react-icons/fa'
+import { useAuth } from '../contexts/AuthContext'
 import { apiFetch } from '../lib/api'
 
 async function checkUserBooking(userId: string): Promise<boolean> {
@@ -20,6 +21,7 @@ export default function Register() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const redirect = searchParams.get('redirect') || '/airports'
+  const { register } = useAuth()
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -34,58 +36,44 @@ export default function Register() {
     setError('')
 
     try {
-      const response = await apiFetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password, phone: phone || undefined }),
-      })
+      await register(email, password, name || undefined, phone || undefined)
 
-      const data = await response.json()
+      // Get user ID from the register response
+      const response = await apiFetch('/api/auth/me')
+      const { user } = await response.json()
 
-      if (response.ok) {
-        sessionStorage.setItem('userId', data.user.id)
-        sessionStorage.setItem('user', JSON.stringify(data.user))
+      // Check if there's a pending outlet or if user needs to enter PNR
+      const pendingOutlet = sessionStorage.getItem('pendingOutlet')
+      const hasBooking = await checkUserBooking(user.id)
 
-        // Trigger storage event to update other components
-        window.dispatchEvent(new Event('storage'))
+      if (pendingOutlet) {
+        // User clicked a dish/outlet, check if they have PNR
+        const outletData = JSON.parse(pendingOutlet)
+        sessionStorage.removeItem('pendingOutlet')
 
-        // Check if there's a pending outlet or if user needs to enter PNR
-        const pendingOutlet = sessionStorage.getItem('pendingOutlet')
-        const hasBooking = await checkUserBooking(data.user.id)
-
-        if (pendingOutlet) {
-          // User clicked a dish/outlet, check if they have PNR
-          const outletData = JSON.parse(pendingOutlet)
-          sessionStorage.removeItem('pendingOutlet')
-
-          if (!hasBooking) {
-            // No PNR, ask for it, then go to outlet
-            navigate(`/pnr?redirect=/outlets/${outletData.outletId}?airportId=${outletData.airportId}`)
-          } else {
-            // Has PNR, go directly to outlet
-            navigate(`/outlets/${outletData.outletId}?airportId=${outletData.airportId}`)
-          }
+        if (!hasBooking) {
+          // No PNR, ask for it, then go to outlet
+          navigate(`/pnr?redirect=/outlets/${outletData.outletId}?airportId=${outletData.airportId}`)
         } else {
-          // For all other cases, check PNR first
-          if (!hasBooking) {
-            // If redirect is already /pnr, don't loop
-            if (redirect.startsWith('/pnr')) {
-              navigate(redirect)
-            } else {
-              // Redirect to PNR, then to original destination
-              navigate(`/pnr?redirect=${encodeURIComponent(redirect)}`)
-            }
-          } else {
-            navigate(redirect)
-          }
+          // Has PNR, go directly to outlet
+          navigate(`/outlets/${outletData.outletId}?airportId=${outletData.airportId}`)
         }
       } else {
-        setError(data.error || 'Registration failed')
+        // For all other cases, check PNR first
+        if (!hasBooking) {
+          // If redirect is already /pnr, don't loop
+          if (redirect.startsWith('/pnr')) {
+            navigate(redirect)
+          } else {
+            // Redirect to PNR, then to original destination
+            navigate(`/pnr?redirect=${encodeURIComponent(redirect)}`)
+          }
+        } else {
+          navigate(redirect)
+        }
       }
-    } catch (err) {
-      setError('An error occurred. Please try again.')
+    } catch (err: any) {
+      setError(err.message || 'An error occurred. Please try again.')
     } finally {
       setLoading(false)
     }

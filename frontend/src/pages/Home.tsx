@@ -1,53 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FaPlane, FaClock, FaMapMarkerAlt, FaShoppingBag, FaUser, FaSignOutAlt } from 'react-icons/fa'
+import { useAuth } from '../contexts/AuthContext'
 import DishesCarousel from '../components/DishesCarousel'
 import LoadingSplash from '../components/LoadingSplash'
 
 export default function Home() {
   const navigate = useNavigate()
-  const [user, setUser] = useState<any>(null)
+  const { user, logout } = useAuth()
   const [showSplash, setShowSplash] = useState(true)
   const [showDropdown, setShowDropdown] = useState(false)
 
-  useEffect(() => {
-    const updateUser = () => {
-      const userStr = sessionStorage.getItem('user')
-      if (userStr) {
-        setUser(JSON.parse(userStr))
-      } else {
-        setUser(null)
-      }
-    }
-
-    // Check on mount
-    updateUser()
-
-    // Listen for storage changes (when user logs in/out in another tab)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'user' || e.key === 'userId') {
-        updateUser()
-      }
-    }
-
-    window.addEventListener('storage', handleStorageChange)
-
-    // Also check when window gains focus (for same-tab login)
-    const handleFocus = () => {
-      updateUser()
-    }
-    window.addEventListener('focus', handleFocus)
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('focus', handleFocus)
-    }
-  }, [])
-
   const handleLogout = () => {
-    sessionStorage.removeItem('userId')
-    sessionStorage.removeItem('user')
-    setUser(null)
+    logout()
+    setShowDropdown(false)
     navigate('/')
   }
 

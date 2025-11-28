@@ -1,6 +1,8 @@
 import express from 'express'
 import { prisma } from '../lib/prisma'
 import { hashPassword, verifyPassword } from '../lib/auth'
+import { generateAccessToken, generateRefreshToken, verifyToken } from '../lib/jwt'
+import { authMiddleware, AuthRequest } from '../middleware/authMiddleware'
 import { z } from 'zod'
 
 const router = express.Router()
@@ -15,6 +17,10 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string(),
+})
+
+const refreshSchema = z.object({
+  refreshToken: z.string(),
 })
 
 router.post('/register', async (req, res) => {
@@ -48,7 +54,15 @@ router.post('/register', async (req, res) => {
       },
     })
 
-    return res.status(201).json({ user })
+    // Generate tokens
+    const accessToken = generateAccessToken(user.id, user.email)
+    const refreshToken = generateRefreshToken(user.id, user.email)
+
+    return res.status(201).json({
+      user,
+      accessToken,
+      refreshToken,
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
@@ -79,6 +93,10 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' })
     }
 
+    // Generate tokens
+    const accessToken = generateAccessToken(user.id, user.email)
+    const refreshToken = generateRefreshToken(user.id, user.email)
+
     return res.json({
       user: {
         id: user.id,
@@ -86,6 +104,8 @@ router.post('/login', async (req, res) => {
         name: user.name,
         phone: user.phone,
       },
+      accessToken,
+      refreshToken,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -95,6 +115,83 @@ router.post('/login', async (req, res) => {
       })
     }
     console.error('Login error:', error)
+    return res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Refresh access token using refresh token
+router.post('/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = refreshSchema.parse(req.body)
+
+    // Verify refresh token
+    const decoded = verifyToken(refreshToken)
+
+    if (decoded.type !== 'refresh') {
+      return res.status(401).json({ error: 'Invalid token type' })
+    }
+
+    // Get user to ensure they still exist
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    })
+
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' })
+    }
+
+    // Generate new access token
+    const accessToken = generateAccessToken(user.id, user.email)
+
+    return res.json({ accessToken })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: 'Invalid input',
+        details: error.errors,
+      })
+    }
+    return res.status(401).json({ error: 'Invalid or expired refresh token' })
+  }
+})
+
+// Get current user from token
+router.get('/me', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Not authenticated' })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        createdAt: true,
+      },
+    })
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    return res.json({ user })
+  } catch (error) {
+    console.error('Get user error:', error)
+    return res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Logout (client-side token removal, optional server-side blacklist)
+router.post('/logout', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    // In a production app, you might want to blacklist the token here
+    // For now, we'll just return success and let the client remove the token
+    return res.json({ message: 'Logged out successfully' })
+  } catch (error) {
+    console.error('Logout error:', error)
     return res.status(500).json({ error: 'Internal server error' })
   }
 })

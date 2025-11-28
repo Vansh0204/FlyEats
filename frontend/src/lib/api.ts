@@ -1,3 +1,5 @@
+import { getAccessToken } from './authUtils'
+
 const RAW_API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '')
 const API_BASE = RAW_API_BASE
 
@@ -17,6 +19,14 @@ export async function apiFetch(
   const retries = init?.retries ?? 2 // total attempts = retries + 1
   const retryDelayMs = init?.retryDelayMs ?? 1000
 
+  // Add JWT token to headers if available
+  const accessToken = getAccessToken()
+  const headers = new Headers(init?.headers)
+
+  if (accessToken && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${accessToken}`)
+  }
+
   // Remove custom fields from fetch init
   const { timeoutMs: _t, retries: _r, retryDelayMs: _d, signal, ...fetchInit } = init || {}
 
@@ -27,7 +37,11 @@ export async function apiFetch(
 
     try {
       const combinedSignal = controller.signal
-      const resp = await fetch(url, { ...fetchInit, signal: combinedSignal })
+      const resp = await fetch(url, {
+        ...fetchInit,
+        headers,
+        signal: combinedSignal
+      })
 
       // Retry on transient server errors (often seen during cold starts)
       if ([502, 503, 504].includes(resp.status) && attempt < retries) {
@@ -51,5 +65,4 @@ export async function apiFetch(
     }
   }
 }
-
 

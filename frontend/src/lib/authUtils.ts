@@ -33,6 +33,8 @@ export function removeTokens(): void {
 // User storage functions
 export function saveUser(user: User): void {
     localStorage.setItem(USER_KEY, JSON.stringify(user))
+    // Also save userId to sessionStorage for backward compatibility
+    sessionStorage.setItem('userId', user.id)
 }
 
 export function getUser(): User | null {
@@ -48,6 +50,7 @@ export function getUser(): User | null {
 
 export function removeUser(): void {
     localStorage.removeItem(USER_KEY)
+    sessionStorage.removeItem('userId')
 }
 
 // Decode JWT token (without verification - for client-side only)

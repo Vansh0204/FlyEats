@@ -41,40 +41,55 @@ export default function Login() {
 
       showToast('Login successful! Welcome back.', 'success')
 
-      // Check if there's a pending outlet or if user needs to enter PNR
-      const pendingOutlet = sessionStorage.getItem('pendingOutlet')
+      // Small delay to ensure state updates
+      setTimeout(async () => {
+        try {
+          // Check if there's a pending outlet or if user needs to enter PNR
+          const pendingOutlet = sessionStorage.getItem('pendingOutlet')
 
-      // Get user ID from the login response
-      const response = await apiFetch('/api/auth/me')
-      const { user } = await response.json()
-      const hasBooking = await checkUserBooking(user.id)
+          // Get user ID from sessionStorage (set by login)
+          const userId = sessionStorage.getItem('userId')
 
-      if (pendingOutlet) {
-        // User clicked a dish/outlet, check if they have PNR
-        const outletData = JSON.parse(pendingOutlet)
-        sessionStorage.removeItem('pendingOutlet')
-
-        if (!hasBooking) {
-          // No PNR, ask for it, then go to outlet
-          navigate(`/pnr?redirect=/outlets/${outletData.outletId}?airportId=${outletData.airportId}`)
-        } else {
-          // Has PNR, go directly to outlet
-          navigate(`/outlets/${outletData.outletId}?airportId=${outletData.airportId}`)
-        }
-      } else {
-        // For all other cases, check PNR first
-        if (!hasBooking) {
-          // If redirect is already /pnr, don't loop
-          if (redirect.startsWith('/pnr')) {
-            navigate(redirect)
-          } else {
-            // Redirect to PNR, then to original destination
-            navigate(`/pnr?redirect=${encodeURIComponent(redirect)}`)
+          if (!userId) {
+            // Fallback: just go to airports if no user ID
+            navigate('/airports')
+            return
           }
-        } else {
-          navigate(redirect)
+
+          const hasBooking = await checkUserBooking(userId)
+
+          if (pendingOutlet) {
+            // User clicked a dish/outlet, check if they have PNR
+            const outletData = JSON.parse(pendingOutlet)
+            sessionStorage.removeItem('pendingOutlet')
+
+            if (!hasBooking) {
+              // No PNR, ask for it, then go to outlet
+              navigate(`/pnr?redirect=/outlets/${outletData.outletId}?airportId=${outletData.airportId}`)
+            } else {
+              // Has PNR, go directly to outlet
+              navigate(`/outlets/${outletData.outletId}?airportId=${outletData.airportId}`)
+            }
+          } else {
+            // For all other cases, check PNR first
+            if (!hasBooking) {
+              // If redirect is already /pnr, don't loop
+              if (redirect.startsWith('/pnr')) {
+                navigate(redirect)
+              } else {
+                // Redirect to PNR, then to original destination
+                navigate(`/pnr?redirect=${encodeURIComponent(redirect)}`)
+              }
+            } else {
+              navigate(redirect)
+            }
+          }
+        } catch (navError) {
+          console.error('Navigation error:', navError)
+          // Fallback: just go to airports
+          navigate('/airports')
         }
-      }
+      }, 100)
     } catch (err: any) {
       const errorMessage = err.message || 'An error occurred. Please try again.'
       setError(errorMessage)

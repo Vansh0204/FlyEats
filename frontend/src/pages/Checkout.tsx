@@ -20,14 +20,14 @@ export default function Checkout() {
 
   const [cart, setCart] = useState<CartItem[]>([])
   const [gate, setGate] = useState(gateNumber)
-  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [deliveryAddress] = useState('')
   const [preOrderTime, setPreOrderTime] = useState('')
   const [specialNotes, setSpecialNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const [booking, setBooking] = useState<any>(null)
   const [outlet, setOutlet] = useState<any>(null)
   const [timingWarning, setTimingWarning] = useState('')
-  const [timingValidating, setTimingValidating] = useState(false)
+
 
   useEffect(() => {
     const storedCart = sessionStorage.getItem('cart')
@@ -80,7 +80,6 @@ export default function Checkout() {
   const validateTiming = async () => {
     if (!booking?.boardingTime || cart.length === 0) return
 
-    setTimingValidating(true)
     setTimingWarning('')
 
     try {
@@ -123,8 +122,6 @@ export default function Checkout() {
       }
     } catch (error) {
       console.error('Error validating timing:', error)
-    } finally {
-      setTimingValidating(false)
     }
   }
 

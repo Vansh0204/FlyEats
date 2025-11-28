@@ -9,7 +9,7 @@
     "start": "node dist/server.js",
     "db:seed": "tsx prisma/seed.ts",
     "db:push": "npx prisma db push",
-    "db:generate": "npx prisma generate"
+    "db:generate": "npx prisma generate --schema=./prisma/schema.prisma"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

@@ -93,30 +93,30 @@ export default function TrackDelivery() {
 
       <main className="container mx-auto px-4 py-8 max-w-3xl">
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h2 className="text-xl font-bold mb-4">{delivery.order.outlet.name}</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">{delivery.order.outlet.name}</h2>
           <div className="space-y-2 text-sm">
             {delivery.order.gateNumber && (
               <p className="text-gray-700 flex items-center gap-2">
                 <FaMapMarkerAlt className="text-orange-500" />
-                <span>Gate: {delivery.order.gateNumber}</span>
+                <span className="text-gray-900">Gate: {delivery.order.gateNumber}</span>
               </p>
             )}
             {delivery.order.deliveryAddress && (
               <p className="text-gray-700 flex items-center gap-2">
                 <FaMapMarkerAlt className="text-orange-500" />
-                <span>{delivery.order.deliveryAddress}</span>
+                <span className="text-gray-900">{delivery.order.deliveryAddress}</span>
               </p>
             )}
             {delivery.deliveryPersonName && (
               <p className="text-gray-700">
-                <span className="font-semibold">Delivery Person:</span> {delivery.deliveryPersonName}
+                <span className="font-semibold text-gray-900">Delivery Person:</span> <span className="text-gray-900">{delivery.deliveryPersonName}</span>
               </p>
             )}
           </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h2 className="text-xl font-bold mb-6">Delivery Status</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Delivery Status</h2>
           <div className="space-y-6">
             {statusSteps.map((step, index) => {
               const isCompleted = index <= currentStepIndex
@@ -124,11 +124,10 @@ export default function TrackDelivery() {
 
               return (
                 <div key={step.key} className="flex items-start gap-4">
-                  <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${
-                    isCompleted
+                  <div className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center ${isCompleted
                       ? 'bg-orange-500 text-white'
-                      : 'bg-gray-200 text-gray-400'
-                  }`}>
+                      : 'bg-gray-200 text-gray-600'
+                    }`}>
                     {isCurrent && !isCompleted ? (
                       <FaSpinner className="animate-spin" />
                     ) : (
@@ -136,13 +135,12 @@ export default function TrackDelivery() {
                     )}
                   </div>
                   <div className="flex-1 pt-2">
-                    <p className={`font-semibold ${
-                      isCompleted ? 'text-gray-900' : 'text-gray-400'
-                    }`}>
+                    <p className={`font-semibold ${isCompleted ? 'text-gray-900' : 'text-gray-500'
+                      }`}>
                       {step.label}
                     </p>
                     {isCurrent && delivery.trackingNotes && (
-                      <p className="text-sm text-gray-600 mt-1">{delivery.trackingNotes}</p>
+                      <p className="text-sm text-gray-700 mt-1">{delivery.trackingNotes}</p>
                     )}
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { FaArrowLeft, FaCheckCircle, FaClock, FaSpinner, FaTruck, FaMapMarkerAlt } from 'react-icons/fa'
+import { FaArrowLeft, FaCheckCircle, FaClock, FaSpinner, FaTruck, FaMapMarkerAlt, FaHome } from 'react-icons/fa'
 import { formatCurrency, formatTime } from '../utils'
 import { apiFetch } from '../lib/api'
 
@@ -116,14 +116,14 @@ export default function OrderDetail() {
       <main className="container mx-auto px-4 py-8 max-w-3xl">
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Order Status</h2>
+            <h2 className="text-xl font-bold text-gray-900">Order Status</h2>
             <div className={`flex items-center gap-2 ${statusInfo.color} font-semibold`}>
               {statusInfo.icon}
               <span>{statusInfo.label}</span>
             </div>
           </div>
-          <p className="text-sm text-gray-600">Order ID: {order.id}</p>
-          <p className="text-sm text-gray-600">Placed at: {new Date(order.createdAt).toLocaleString()}</p>
+          <p className="text-sm text-gray-700">Order ID: <span className="text-gray-900">{order.id}</span></p>
+          <p className="text-sm text-gray-700">Placed at: <span className="text-gray-900">{new Date(order.createdAt).toLocaleString()}</span></p>
           {order.preOrderTime && (
             <p className="text-sm text-orange-600 mt-2">
               Scheduled for: {new Date(order.preOrderTime).toLocaleString()}
@@ -132,7 +132,7 @@ export default function OrderDetail() {
         </div>
 
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h2 className="text-xl font-bold mb-2">{order.outlet.name}</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{order.outlet.name}</h2>
           <Link
             to={`/outlets/${order.outlet.id}`}
             className="text-orange-600 hover:underline text-sm"
@@ -143,24 +143,24 @@ export default function OrderDetail() {
 
         {(order.gateNumber || order.deliveryAddress || order.delivery) && (
           <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
               <FaMapMarkerAlt className="text-orange-500" />
               Delivery Information
             </h2>
             {order.gateNumber && (
               <p className="text-gray-700 mb-2">
-                <span className="font-semibold">Gate:</span> {order.gateNumber}
+                <span className="font-semibold text-gray-900">Gate:</span> <span className="text-gray-900">{order.gateNumber}</span>
               </p>
             )}
             {order.deliveryAddress && (
               <p className="text-gray-700 mb-2">
-                <span className="font-semibold">Location:</span> {order.deliveryAddress}
+                <span className="font-semibold text-gray-900">Location:</span> <span className="text-gray-900">{order.deliveryAddress}</span>
               </p>
             )}
             {order.delivery && (
               <div className="mt-4 pt-4 border-t">
-                <p className="text-sm text-gray-600 mb-2">
-                  <span className="font-semibold">Delivery Status:</span> {order.delivery.status}
+                <p className="text-sm text-gray-700 mb-2">
+                  <span className="font-semibold text-gray-900">Delivery Status:</span> <span className="text-gray-900">{order.delivery.status}</span>
                 </p>
                 {order.delivery.estimatedTime && (
                   <p className="text-sm text-orange-600">
@@ -168,7 +168,7 @@ export default function OrderDetail() {
                   </p>
                 )}
                 {order.delivery.trackingNotes && (
-                  <p className="text-sm text-gray-600 mt-2">{order.delivery.trackingNotes}</p>
+                  <p className="text-sm text-gray-700 mt-2">{order.delivery.trackingNotes}</p>
                 )}
               </div>
             )}
@@ -176,32 +176,41 @@ export default function OrderDetail() {
         )}
 
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h2 className="text-xl font-bold mb-4">Order Items</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Order Items</h2>
           <div className="space-y-3">
             {order.items.map((item) => (
               <div key={item.id} className="flex justify-between border-b pb-3">
                 <div>
-                  <p className="font-semibold">{item.menuItem.name}</p>
+                  <p className="font-semibold text-gray-900">{item.menuItem.name}</p>
                   <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                 </div>
-                <p className="font-semibold">{formatCurrency(item.price * item.quantity)}</p>
+                <p className="font-semibold text-gray-900">{formatCurrency(item.price * item.quantity)}</p>
               </div>
             ))}
           </div>
           <div className="mt-4 pt-4 border-t flex justify-between text-xl font-bold">
-            <span>Total:</span>
+            <span className="text-gray-900">Total:</span>
             <span className="text-orange-600">{formatCurrency(order.totalAmount)}</span>
           </div>
         </div>
 
-        {order.delivery && (
+        <div className="space-y-3">
+          {order.delivery && (
+            <Link
+              to={`/orders/${order.id}/track`}
+              className="block w-full px-6 py-3 bg-orange-500 text-white text-center rounded-lg hover:bg-orange-600 transition-colors font-semibold"
+            >
+              Track Delivery
+            </Link>
+          )}
           <Link
-            to={`/orders/${order.id}/track`}
-            className="block w-full px-6 py-3 bg-orange-500 text-white text-center rounded-lg hover:bg-orange-600 transition-colors font-semibold mb-6"
+            to="/airports"
+            className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-gray-100 text-gray-900 text-center rounded-lg hover:bg-gray-200 transition-colors font-semibold"
           >
-            Track Delivery
+            <FaHome />
+            Home
           </Link>
-        )}
+        </div>
       </main>
     </div>
   )

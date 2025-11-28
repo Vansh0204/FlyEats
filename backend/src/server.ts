@@ -9,6 +9,7 @@ import deliveryRoutes from './routes/delivery'
 import dishesRoutes from './routes/dishes'
 import pnrRoutes from './routes/pnr'
 import aiRoutes from './routes/ai'
+import adminRoutes from './routes/admin'
 
 const app = express()
 const PORT = process.env.PORT || 5001
@@ -51,6 +52,7 @@ app.use('/api/delivery', deliveryRoutes)
 app.use('/api/dishes', dishesRoutes)
 app.use('/api/pnr', pnrRoutes)
 app.use('/api/ai', aiRoutes)
+app.use('/api/admin', adminRoutes)
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'FlyEats API is running' })

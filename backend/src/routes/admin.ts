@@ -8,6 +8,8 @@ const prisma = new PrismaClient()
 // One-time database initialization endpoint
 router.post('/init-db', async (req, res) => {
     try {
+        const force = req.query.force === 'true'
+
         // Run schema push to create tables
         console.log('🔄 Pushing schema to database...')
         const { execSync } = require('child_process')
@@ -17,6 +19,17 @@ router.post('/init-db', async (req, res) => {
         } catch (pushError) {
             console.error('Failed to push schema:', pushError)
             // Continue anyway, maybe tables exist
+        }
+
+        // Check if we should skip if already initialized
+        if (!force) {
+            const airportCount = await prisma.airport.count()
+            if (airportCount > 0) {
+                return res.json({
+                    message: 'Database already initialized. Use ?force=true to reset.',
+                    airports: airportCount
+                })
+            }
         }
 
         // Clean up existing data to ensure fresh start

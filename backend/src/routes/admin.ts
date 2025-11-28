@@ -8,6 +8,17 @@ const prisma = new PrismaClient()
 // One-time database initialization endpoint
 router.post('/init-db', async (req, res) => {
     try {
+        // Run schema push to create tables
+        console.log('🔄 Pushing schema to database...')
+        const { execSync } = require('child_process')
+        try {
+            execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' })
+            console.log('✅ Schema pushed successfully')
+        } catch (pushError) {
+            console.error('Failed to push schema:', pushError)
+            // Continue anyway, maybe tables exist
+        }
+
         // Check if database is already seeded
         const airportCount = await prisma.airport.count()
         if (airportCount > 0) {

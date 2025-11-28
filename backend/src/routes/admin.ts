@@ -19,14 +19,16 @@ router.post('/init-db', async (req, res) => {
             // Continue anyway, maybe tables exist
         }
 
-        // Check if database is already seeded
-        const airportCount = await prisma.airport.count()
-        if (airportCount > 0) {
-            return res.json({
-                message: 'Database already initialized',
-                airports: airportCount
-            })
-        }
+        // Clean up existing data to ensure fresh start
+        console.log('🧹 Cleaning up existing data...')
+        await prisma.orderItem.deleteMany()
+        await prisma.order.deleteMany()
+        await prisma.menuItem.deleteMany()
+        await prisma.outlet.deleteMany()
+        await prisma.gate.deleteMany()
+        await prisma.booking.deleteMany()
+        await prisma.airport.deleteMany()
+        await prisma.user.deleteMany()
 
         console.log('🌱 Seeding database...')
 
@@ -48,6 +50,8 @@ router.post('/init-db', async (req, res) => {
                 code: 'PNQ',
                 city: 'Pune',
                 country: 'India',
+                latitude: 18.5822,
+                longitude: 73.9197,
                 gates: {
                     create: [
                         { number: '1', terminal: 'T1' },
